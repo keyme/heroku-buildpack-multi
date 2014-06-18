@@ -16,6 +16,7 @@ for BUILDPACK in $(cat $1/.buildpacks); do
   dir=$(mktemp -t buildpackXXXXX)
   rm -rf $dir
 
+  ready=0
   url=${BUILDPACK%#*}
   branch=${BUILDPACK#*#}
 
@@ -23,7 +24,12 @@ for BUILDPACK in $(cat $1/.buildpacks); do
     branch=""
   fi
 
-  if [ "$url" != "" ]; then
+  if [ -d $1/$BUILDPACK ]; then
+    echo "=====> Using Buildpack From: $BUILDPACK"
+
+    dir=$1/$BUILDPACK
+    ready=1
+  elif [ "$url" != "" ]; then
     echo "=====> Downloading Buildpack: $url"
 
     if [[ "$url" =~ \.tgz$ ]]; then
@@ -38,6 +44,10 @@ for BUILDPACK in $(cat $1/.buildpacks); do
       git checkout $branch >/dev/null 2>&1
     fi
 
+    ready=1
+  fi
+
+  if [ $ready == 1 ]; then
     # we'll get errors later if these are needed and don't exist
     chmod -f +x $dir/bin/{detect,compile,release} || true
 
